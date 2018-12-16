@@ -33,64 +33,39 @@ class SequencesAnalyzer:
         3: '•'
     }
 
-    def _traceback(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
-        '''Use both matrices to replay the optimal route'''
-        seq_a_aligned = ''
-        seq_b_aligned = ''
-
-        # 1. Select starting point
-        row, col = start_pos
-
-        # 2. Terminate when 0 is reached (end of path)
-        while result_matrix[row, col] != 0:
-            symbol = traceback_matrix[row, col]
-
-            # 3. Use arrows to navigate and collect letters (in reversed order)
-            # Shift indexes by one (matrix has additional row and column)
-            if symbol == '↖':
-                seq_a_aligned += self.seq_a[row - 1]
-                seq_b_aligned += self.seq_b[col - 1]
-                row -= 1
-                col -= 1
-            elif symbol == '↑':
-                seq_a_aligned += self.seq_a[row - 1]
-                seq_b_aligned += '-'
-                row -= 1
-            elif symbol == '←':
-                seq_a_aligned += '-'
-                seq_b_aligned += self.seq_b[col - 1]
-                col -= 1
-        # Reverse strings (traceback goes from bottom-right to top-left)
-        return seq_a_aligned[::-1], seq_b_aligned[::-1]
-
-    # TODO Refactor score and edit_cost into separate class, allow for loading from file
-    def score(self, a, b):
-        assert isinstance(a, str) and isinstance(b, str)
-        assert len(a) == 1 and len(b) == 1
-
-        match, mismatch, gap = 1, -1, -1
-        if a == b:
-            return match
-        else:
-            if '-' in [a, b]:
-                return gap
-            return mismatch
-
-    def edit_cost(self, a, b):
-        assert isinstance(a, str) and isinstance(b, str)
-        assert len(a) == 1 and len(b) == 1
-
-        match, mismatch, gap = 0, 1, 1
-        if a == b:
-            return match
-        else:
-            if '-' in [a, b]:
-                return gap
-            return mismatch
-
     def __init__(self, seq_a: str, seq_b: str) -> None:
         self.seq_a = seq_a
         self.seq_b = seq_b
+
+    def local_alignment(self) -> Tuple[str, str]:
+        result = self.smith_waterman_algorithm()
+        alignment_a, alignment_b = self._traceback(
+            result_matrix=result['result_matrix'],
+            traceback_matrix=result['traceback_matrix'],
+            start_pos=result['score_pos'])
+
+        print(result['result_matrix'])
+        print(result['traceback_matrix'])
+        print('[Local Alignment] Score={}'.format(result['score']))
+        print(alignment_a)
+        print(alignment_b)
+        return alignment_a, alignment_b
+
+    def similarity(self) -> int:
+        result = self.needleman_wunsch_algorithm(minimize=False)
+
+        print(result['result_matrix'])
+        print(result['traceback_matrix'])
+        print('[Similarity] Score={}'.format(result['score']))
+        return result['score']
+
+    def edit_distance(self) -> int:
+        result = self.needleman_wunsch_algorithm(minimize=True)
+
+        print(result['result_matrix'])
+        print(result['traceback_matrix'])
+        print('[Edit distance] Cost={}'.format(result['score']))
+        return result['score']
 
     def needleman_wunsch_algorithm(self, minimize: bool) -> Dict[str, Any]:
         '''
@@ -192,32 +167,57 @@ class SequencesAnalyzer:
             'score_pos': np.unravel_index(np.argmax(H, axis=None), H.shape)
         }
 
-    def local_alignment(self) -> Tuple[str, str]:
-        result = self.smith_waterman_algorithm()
-        alignment_a, alignment_b = self._traceback(
-            result_matrix=result['result_matrix'],
-            traceback_matrix=result['traceback_matrix'],
-            start_pos=result['score_pos'])
+    def _traceback(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
+        '''Use both matrices to replay the optimal route'''
+        seq_a_aligned = ''
+        seq_b_aligned = ''
 
-        print(result['result_matrix'])
-        print(result['traceback_matrix'])
-        print('[Local Alignment] Score={}'.format(result['score']))
-        print(alignment_a)
-        print(alignment_b)
-        return alignment_a, alignment_b
+        # 1. Select starting point
+        row, col = start_pos
 
-    def similarity(self) -> int:
-        result = self.needleman_wunsch_algorithm(minimize=False)
+        # 2. Terminate when 0 is reached (end of path)
+        while result_matrix[row, col] != 0:
+            symbol = traceback_matrix[row, col]
 
-        print(result['result_matrix'])
-        print(result['traceback_matrix'])
-        print('[Similarity] Score={}'.format(result['score']))
-        return result['score']
+            # 3. Use arrows to navigate and collect letters (in reversed order)
+            # Shift indexes by one (matrix has additional row and column)
+            if symbol == '↖':
+                seq_a_aligned += self.seq_a[row - 1]
+                seq_b_aligned += self.seq_b[col - 1]
+                row -= 1
+                col -= 1
+            elif symbol == '↑':
+                seq_a_aligned += self.seq_a[row - 1]
+                seq_b_aligned += '-'
+                row -= 1
+            elif symbol == '←':
+                seq_a_aligned += '-'
+                seq_b_aligned += self.seq_b[col - 1]
+                col -= 1
+        # Reverse strings (traceback goes from bottom-right to top-left)
+        return seq_a_aligned[::-1], seq_b_aligned[::-1]
 
-    def edit_distance(self) -> int:
-        result = self.needleman_wunsch_algorithm(minimize=True)
+    # TODO Refactor score and edit_cost into separate class, allow for loading from file
+    def score(self, a, b):
+        assert isinstance(a, str) and isinstance(b, str)
+        assert len(a) == 1 and len(b) == 1
 
-        print(result['result_matrix'])
-        print(result['traceback_matrix'])
-        print('[Edit distance] Cost={}'.format(result['score']))
-        return result['score']
+        match, mismatch, gap = 1, -1, -1
+        if a == b:
+            return match
+        else:
+            if '-' in [a, b]:
+                return gap
+            return mismatch
+
+    def edit_cost(self, a, b):
+        assert isinstance(a, str) and isinstance(b, str)
+        assert len(a) == 1 and len(b) == 1
+
+        match, mismatch, gap = 0, 1, 1
+        if a == b:
+            return match
+        else:
+            if '-' in [a, b]:
+                return gap
+            return mismatch
