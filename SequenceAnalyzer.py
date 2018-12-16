@@ -3,28 +3,28 @@ from typing import Tuple, Dict, Any
 '''
 Author: Michal Martyniak (github: @micmarty)
 
-Helpful resources:
-https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/local.pdf
+Helpful resources: https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/local.pdf
+Note: Smith Waterman and Needleman Wunsch algorithms are very, very similar but it's meant to be separated
 '''
 
 
 class SequencesAnalyzer:
-    similarity_matrix = {
-        'A': {'A': 1, 'G': 2, 'C': 2, 'T': 2, 'U': 2, '-': 0},
-        'G': {'A': -1, 'G': 1, 'C': 2, 'T': 2, 'U': 2, '-': 0},
-        'C': {'A': -1, 'G': 2, 'C': 1, 'T': 2, 'U': 2, '-': 0},
-        'T': {'A': -1, 'G': 2, 'C': 2, 'T': 1, 'U': 2, '-': 0},
-        'U': {'A': -1, 'G': -1, 'C': 2, 'T': 2, 'U': 1, '-': 0},
-        '-': {'A': 0, 'G': 0, 'C': 0, 'T': 0, 'U': 0, '-': 1}
-    }
-    replacement_cost = {
-        'A': {'A': 0, 'G': 2, 'C': 2, 'T': 2, 'U': 2, '-': 1},
-        'G': {'A': 2, 'G': 0, 'C': 2, 'T': 2, 'U': 2, '-': 1},
-        'C': {'A': 2, 'G': 2, 'C': 0, 'T': 2, 'U': 2, '-': 1},
-        'T': {'A': 2, 'G': 2, 'C': 2, 'T': 0, 'U': 2, '-': 1},
-        'U': {'A': 2, 'G': 2, 'C': 2, 'T': 2, 'U': 0, '-': 1},
-        '-': {'A': 1, 'G': 1, 'C': 1, 'T': 1, 'U': 1, '-': 0}
-    }
+    # similarity_matrix = {
+    #     'A': {'A': 1, 'G': 2, 'C': 2, 'T': 2, 'U': 2, '-': 0},
+    #     'G': {'A': -1, 'G': 1, 'C': 2, 'T': 2, 'U': 2, '-': 0},
+    #     'C': {'A': -1, 'G': 2, 'C': 1, 'T': 2, 'U': 2, '-': 0},
+    #     'T': {'A': -1, 'G': 2, 'C': 2, 'T': 1, 'U': 2, '-': 0},
+    #     'U': {'A': -1, 'G': -1, 'C': 2, 'T': 2, 'U': 1, '-': 0},
+    #     '-': {'A': 0, 'G': 0, 'C': 0, 'T': 0, 'U': 0, '-': 1}
+    # }
+    # replacement_cost = {
+    #     'A': {'A': 0, 'G': 2, 'C': 2, 'T': 2, 'U': 2, '-': 1},
+    #     'G': {'A': 2, 'G': 0, 'C': 2, 'T': 2, 'U': 2, '-': 1},
+    #     'C': {'A': 2, 'G': 2, 'C': 0, 'T': 2, 'U': 2, '-': 1},
+    #     'T': {'A': 2, 'G': 2, 'C': 2, 'T': 0, 'U': 2, '-': 1},
+    #     'U': {'A': 2, 'G': 2, 'C': 2, 'T': 2, 'U': 0, '-': 1},
+    #     '-': {'A': 1, 'G': 1, 'C': 1, 'T': 1, 'U': 1, '-': 0}
+    # }
 
     traceback_symbols = {
         0: '↖',
@@ -37,6 +37,8 @@ class SequencesAnalyzer:
         '''Use both matrices to replay the optimal route'''
         seq_a_aligned = ''
         seq_b_aligned = ''
+
+        # 1. Select starting point
         row, col = start_pos
 
         # 2. Terminate when 0 is reached (end of path)
@@ -89,7 +91,6 @@ class SequencesAnalyzer:
     def __init__(self, seq_a: str, seq_b: str) -> None:
         self.seq_a = seq_a
         self.seq_b = seq_b
-        # Look for txt files with matrices
 
     def needleman_wunsch_algorithm(self, minimize: bool) -> Dict[str, Any]:
         '''
@@ -98,9 +99,14 @@ class SequencesAnalyzer:
         Algorithm: Needleman-Wunch
         Time complexity: O(nm)
         Space complexity: O(nm)
+
+        `minimize` is a flag which needs to be enabled when calculating edit distance
         '''
-        # Use grid/matrix as graph-like acyclic digraph (array cells are vertices)
+        # 1. Prepare dimensions (required additional 1 column and 1 row)
         rows, cols = len(self.seq_a) + 1, len(self.seq_b) + 1
+
+        # 2. Initialize matrices
+        # Use grid/matrix as graph-like acyclic digraph (array cells are vertices)
         H = np.zeros(shape=(rows, cols), dtype=int)
         traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
 
@@ -108,8 +114,7 @@ class SequencesAnalyzer:
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
         traceback[1:, 0] = np.array(list(self.seq_a), dtype=str)
 
-        # 1. Initialize matrix
-        # Top row and leftmost column, like: 0, 1, 2, 3, etc.
+        # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
         H[0, :] = np.arange(start=0, stop=cols)
         H[:, 0] = np.arange(start=0, stop=rows)
 
@@ -148,12 +153,15 @@ class SequencesAnalyzer:
         }
 
     def smith_waterman_algorithm(self) -> Dict[str, Any]:
+        # TODO Add description similar to needleman-wunsch
         # 1. Prepare dimensions (required additional 1 column and 1 row)
         rows, cols = len(self.seq_a) + 1, len(self.seq_b) + 1
 
         # 2. Initialize matrices
+        # Use grid/matrix as graph-like acyclic digraph (array cells are vertices)
         H = np.zeros(shape=(rows, cols), dtype=int)
         traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
+
         # Put sequences' letters into first row and first column (better visualization)
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
         traceback[1:, 0] = np.array(list(self.seq_a), dtype=str)
