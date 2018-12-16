@@ -12,20 +12,21 @@ def main(summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
     analyzer = SequencesAnalyzer(sequence_a, sequence_b)
 
     if summary:
-        # analyzer.edit_distance()
-        # analyzer.similarity()
+        analyzer.edit_distance()
+        analyzer.similarity()
         analyzer.local_alignment()
         # analyzer.global_alignment()
     if similarity:
         analyzer.similarity()
     if edit_distance:
         analyzer.edit_distance()
+
     if alignment == 'local':
         analyzer.local_alignment()
     elif alignment == 'global':
+        # TODO Implement
         #analyzer.global_alignment()
         pass
-    # TODO edit + similarity
 
 if __name__ == '__main__':
     main()
