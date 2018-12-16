@@ -1,2 +1,26 @@
 # dna-sequence-analyzer
-Local/global sequence alignment (Smith Waterman algorithm), edit distance/similarity (Needleman Wunsch algorithm), RNA to amino acids translation
+
+## Features
+- Local alignment (Smith-Waterman algorithm)
+- Global alignment (in-progress)
+- Edit distance and similarity (Smith-Waterman algorithm)
+
+## Available commands
+```
+Usage: analyze.py [OPTIONS] SEQUENCE_A SEQUENCE_B
+
+Options:
+  -S, --summary
+  -s, --similarity
+  -e, --edit-distance
+  -a, --alignment [global|local]
+  --help                          Show this message and exit.
+```
+## Examples
+```
+python analyze.py AGCT AGGT --summary
+python analyze.py AGCT AGGT --similarity
+python analyze.py AGCT AGGT --edit-distance
+python analyze.py AGCT AGGT --alignment local
+python analyze.py AGCT AGGT --alignment global
+```
