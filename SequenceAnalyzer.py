@@ -40,11 +40,10 @@ class SequencesAnalyzer:
 
     def global_alignment(self) -> Tuple[str, str]:
         result = self.needleman_wunsch_algorithm(minimize=False, alignment_cal=True)
-        alignment_a, alignment_b, score = self._tracebackGlobal(
+        alignment_a, alignment_b = self._tracebackGlobal(
             traceback_matrix=result['traceback_matrix'],
             start_pos=result['score_pos'])
 
-        print('[Global Alignment] Score={}'.format(score))
         print(alignment_a)
         print(alignment_b)
         return alignment_a, alignment_b
@@ -203,10 +202,9 @@ class SequencesAnalyzer:
         # Reverse strings (traceback goes from bottom-right to top-left)
         return seq_a_aligned[::-1], seq_b_aligned[::-1]
 
-    def _tracebackGlobal(self, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str, int]:
+    def _tracebackGlobal(self, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
         seq_a_aligned = ''
         seq_b_aligned = ''
-        score = 0
 
         # 1. Select starting point
         position = list(start_pos)
@@ -215,14 +213,10 @@ class SequencesAnalyzer:
         while all(x != 0 for x in position):
             symbol = traceback_matrix[position[0], position[1]]
             letter_pair = self.translateArrow(symbol, position)
-            # add letters to series
             seq_a_aligned += letter_pair[0]
             seq_b_aligned += letter_pair[1]
-            # add score for new pair
-            score += self.score(letter_pair[0], letter_pair[1])
-
         # Reverse strings (traceback goes from bottom-right to top-left)
-        return seq_a_aligned[::-1], seq_b_aligned[::-1], score
+        return seq_a_aligned[::-1], seq_b_aligned[::-1]
 
     def translateArrow(self, symbol, position) -> Tuple[str, str]:
         # Use arrows to navigate and collect letters (in reversed order)
