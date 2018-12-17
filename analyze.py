@@ -1,6 +1,7 @@
 import click
 from SequenceAnalyzer import SequencesAnalyzer
 
+
 @click.command()
 @click.argument('sequence_a')
 @click.argument('sequence_b')
@@ -15,7 +16,7 @@ def main(summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
         analyzer.edit_distance()
         analyzer.similarity()
         analyzer.local_alignment()
-        # analyzer.global_alignment()
+        analyzer.global_alignment()
     if similarity:
         analyzer.similarity()
     if edit_distance:
@@ -24,9 +25,8 @@ def main(summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
     if alignment == 'local':
         analyzer.local_alignment()
     elif alignment == 'global':
-        # TODO Implement
-        #analyzer.global_alignment()
-        pass
+        analyzer.global_alignment()
+
 
 if __name__ == '__main__':
     main()

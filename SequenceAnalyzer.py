@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Tuple, Dict, Any
+
 '''
 Author: Michal Martyniak (github: @micmarty)
 
@@ -37,9 +38,19 @@ class SequencesAnalyzer:
         self.seq_a = seq_a
         self.seq_b = seq_b
 
+    def global_alignment(self) -> Tuple[str, str]:
+        result = self.needleman_wunsch_algorithm(minimize=False)
+        alignment_a, alignment_b = self._tracebackGlobal(
+            traceback_matrix=result['traceback_matrix'],
+            start_pos=result['score_pos'])
+
+        print(alignment_a)
+        print(alignment_b)
+        return alignment_a, alignment_b
+
     def local_alignment(self) -> Tuple[str, str]:
         result = self.smith_waterman_algorithm()
-        alignment_a, alignment_b = self._traceback(
+        alignment_a, alignment_b = self._tracebackLocal(
             result_matrix=result['result_matrix'],
             traceback_matrix=result['traceback_matrix'],
             start_pos=result['score_pos'])
@@ -85,13 +96,22 @@ class SequencesAnalyzer:
         H = np.zeros(shape=(rows, cols), dtype=int)
         traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
 
+        if minimize:
+            # Required for edit cost calculation
+            sign = 1
+            score_func = self.edit_cost
+        else:
+            # Required for similarity calculation
+            score_func = self.score
+            sign = -1
+
         # Put sequences' letters into first row and first column (better visualization)
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
         traceback[1:, 0] = np.array(list(self.seq_a), dtype=str)
 
         # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
-        H[0, :] = np.arange(start=0, stop=cols)
-        H[:, 0] = np.arange(start=0, stop=rows)
+        H[0, :] = np.arange(start=0, stop=sign*cols, step=sign*1)
+        H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign*1)
 
         for row in range(1, rows):
             for col in range(1, cols):
@@ -99,16 +119,9 @@ class SequencesAnalyzer:
                 a = self.seq_a[row - 1]
                 b = self.seq_b[col - 1]
 
-                if minimize:
-                    # Required for edit cost calculation
-                    score_func = self.edit_cost
-                else:
-                    # Required for similarity calculation
-                    score_func = self.score
-
-                leave_or_replace_letter = H[row-1, col-1] + score_func(a, b)
-                delete_indel = H[row-1, col] + score_func('-', b)
-                insert_indel = H[row, col-1] + score_func(a, '-')
+                leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
+                delete_indel = H[row - 1, col] + score_func('-', b)
+                insert_indel = H[row, col - 1] + score_func(a, '-')
 
                 scores = [leave_or_replace_letter, delete_indel, insert_indel]
 
@@ -148,9 +161,9 @@ class SequencesAnalyzer:
                 a = self.seq_a[row - 1]
                 b = self.seq_b[col - 1]
 
-                leave_or_replace_letter = H[row-1, col-1] + self.score(a, b)
-                delete_indel = H[row-1, col] + self.score('-', b)
-                insert_indel = H[row, col-1] + self.score(a, '-')
+                leave_or_replace_letter = H[row - 1, col - 1] + self.score(a, b)
+                delete_indel = H[row - 1, col] + self.score('-', b)
+                insert_indel = H[row, col - 1] + self.score(a, '-')
 
                 # Zero is required - ignore negative numbers
                 scores = [leave_or_replace_letter,
@@ -167,35 +180,52 @@ class SequencesAnalyzer:
             'score_pos': np.unravel_index(np.argmax(H, axis=None), H.shape)
         }
 
-    def _traceback(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
+    def _tracebackLocal(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
         '''Use both matrices to replay the optimal route'''
         seq_a_aligned = ''
         seq_b_aligned = ''
 
         # 1. Select starting point
-        row, col = start_pos
+        position = list(start_pos)
 
         # 2. Terminate when 0 is reached (end of path)
-        while result_matrix[row, col] != 0:
-            symbol = traceback_matrix[row, col]
-
-            # 3. Use arrows to navigate and collect letters (in reversed order)
-            # Shift indexes by one (matrix has additional row and column)
-            if symbol == '↖':
-                seq_a_aligned += self.seq_a[row - 1]
-                seq_b_aligned += self.seq_b[col - 1]
-                row -= 1
-                col -= 1
-            elif symbol == '↑':
-                seq_a_aligned += self.seq_a[row - 1]
-                seq_b_aligned += '-'
-                row -= 1
-            elif symbol == '←':
-                seq_a_aligned += '-'
-                seq_b_aligned += self.seq_b[col - 1]
-                col -= 1
+        while result_matrix[position[0], position[1]] != 0:
+            symbol = traceback_matrix[position[0], position[1]]
+            letter_pair = self.translateArrow(symbol, position)
+            seq_a_aligned += letter_pair[0]
+            seq_b_aligned += letter_pair[1]
         # Reverse strings (traceback goes from bottom-right to top-left)
         return seq_a_aligned[::-1], seq_b_aligned[::-1]
+
+    def _tracebackGlobal(self, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
+        seq_a_aligned = ''
+        seq_b_aligned = ''
+
+        # 1. Select starting point
+        position = list(start_pos)
+
+        # 2. Terminate when top left corner (0,0) is reached (end of path)
+        while all(x != 0 for x in position):
+            symbol = traceback_matrix[position[0], position[1]]
+            letter_pair = self.translateArrow(symbol, position)
+            seq_a_aligned += letter_pair[0]
+            seq_b_aligned += letter_pair[1]
+        # Reverse strings (traceback goes from bottom-right to top-left)
+        return seq_a_aligned[::-1], seq_b_aligned[::-1]
+
+    def translateArrow(self, symbol, position) -> Tuple[str, str]:
+        # Use arrows to navigate and collect letters (in reversed order)
+        # Shift indexes by one (matrix has additional row and column)
+        if symbol == '↖':
+            position[0] = position[0] - 1
+            position[1] = position[1] - 1
+            return self.seq_a[position[0]], self.seq_b[position[1]]
+        elif symbol == '↑':
+            position[0] = position[0] - 1
+            return self.seq_a[position[0]], '-'
+        elif symbol == '←':
+            position[1] = position[1] - 1
+            return '-', self.seq_b[position[1]]
 
     # TODO Refactor score and edit_cost into separate class, allow for loading from file
     def score(self, a, b):
