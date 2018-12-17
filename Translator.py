@@ -32,7 +32,6 @@ class Translator:
         stop_codon_pos: int = max(rna_sequence.find('UAA'), rna_sequence.find('UAG'), rna_sequence.find('UGA'))
 
         assert start_codon_pos > -1, 'Sequence does not contain a start codon!'
-        print(start_codon_pos, stop_codon_pos)
         assert stop_codon_pos > -1, 'Sequence does not contain any of stop codons!'
         # Notice that AUGAUG (duplicated start codons) can be read as aUGA (stop codon)
         # If that situation is impossible, then we should replace 1 with 3
