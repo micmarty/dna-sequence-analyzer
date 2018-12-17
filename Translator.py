@@ -1,5 +1,9 @@
+'''
+Useful for validation: http://www.attotron.com/cybertory/analysis/trans.htm
+'''
+
 class Translator:
-    rna_codon = {
+    rna_codons = {
         "UUU": "F", "CUU": "L", "AUU": "I", "GUU": "V",
         "UUC": "F", "CUC": "L", "AUC": "I", "GUC": "V",
         "UUA": "L", "CUA": "L", "AUA": "I", "GUA": "V",
@@ -18,11 +22,36 @@ class Translator:
         "UGG": "W", "CGG": "R", "AGG": "R", "GGG": "G"
     }
 
-    @staticmethod
-    def rna_sequence_to_protein(rna_sequence: str) -> str:
-        protein = ''
-        for i in range(0, len(rna_sequence) - (3 + len(rna_sequence) % 3), 3):
-            if Translator.rna_codon[rna_sequence[i:i + 3]] == "STOP":
+    def __init__(self, rna_sequence: str) -> None:
+        allowed_symbols = set(['A', 'C', 'G', 'T', 'U'])
+        symbols = set(rna_sequence.upper())
+        assert symbols <= allowed_symbols, 'Sequence contains invalid nucleotide symbols!'
+
+        # If find(arg) returns -1 -> arg not present in string
+        start_codon_pos: int = rna_sequence.find('AUG')
+        stop_codon_pos: int = max(rna_sequence.find('UAA'), rna_sequence.find('UAG'), rna_sequence.find('UGA'))
+
+        assert start_codon_pos > -1, 'Sequence does not contain a start codon!'
+        assert stop_codon_pos > -1, 'Sequence does not contain any of stop codons!'
+        # Notice that AUGAUG (duplicated start codons) can be read as aUGA (stop codon)
+        # If that situation is impossible, then we should replace 1 with 3
+        assert start_codon_pos + 1 <= stop_codon_pos, 'Start codon must be placed before stop codon!'
+
+        self.rna_seq = rna_sequence
+
+    @property
+    def to_protein(self) -> str:
+        '''Terminates when stop codon is found'''
+        protein: str = ''
+
+        # 1. Ignore everything before start codon
+        start_codon_pos = self.rna_seq.find('AUG')
+
+        # 2. Translate codons to amino acids until no stop codon was found
+        for nucl_pos in range(start_codon_pos, len(self.rna_seq), 3):
+            codon = self.rna_seq[nucl_pos:nucl_pos + 3]
+            if self.rna_codons[codon] == 'STOP':
                 break
-            protein += Translator.rna_codon[rna_sequence[i:i + 3]]
+            protein += self.rna_codons[codon]
+
         return protein
