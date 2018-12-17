@@ -9,8 +9,9 @@ from SequenceAnalyzer import SequencesAnalyzer
 @click.option('-s', '--similarity', is_flag=True)
 @click.option('-e', '--edit-distance', is_flag=True)
 @click.option('-a', '--alignment', type=click.Choice(['global', 'local']))
-def main(summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
-    analyzer = SequencesAnalyzer(sequence_a, sequence_b)
+@click.option('--scoring-matrix', type=click.Path(exists=True), help='Text file containing 5x5 matrix of integers separated by spaces and new line')
+def main(scoring_matrix, summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
+    analyzer = SequencesAnalyzer(sequence_a, sequence_b, scoring_matrix_path=scoring_matrix)
 
     if summary:
         analyzer.edit_distance()
