@@ -22,6 +22,7 @@ Options:
 ## Requirements
 - Python 3.7 (type annotations)
 - numpy
+- pandas
 - click (CLI)
 
 `pip install -r requirements.txt`
