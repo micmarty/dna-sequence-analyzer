@@ -39,7 +39,7 @@ class SequencesAnalyzer:
         self.seq_b = seq_b
 
     def global_alignment(self) -> Tuple[str, str]:
-        result = self.needleman_wunsch_algorithm(minimize=False)
+        result = self.needleman_wunsch_algorithm(minimize=False, alignment_cal=True)
         alignment_a, alignment_b = self._tracebackGlobal(
             traceback_matrix=result['traceback_matrix'],
             start_pos=result['score_pos'])
@@ -63,7 +63,7 @@ class SequencesAnalyzer:
         return alignment_a, alignment_b
 
     def similarity(self) -> int:
-        result = self.needleman_wunsch_algorithm(minimize=False)
+        result = self.needleman_wunsch_algorithm(minimize=False, alignment_cal=False)
 
         print(result['result_matrix'])
         print(result['traceback_matrix'])
@@ -71,14 +71,14 @@ class SequencesAnalyzer:
         return result['score']
 
     def edit_distance(self) -> int:
-        result = self.needleman_wunsch_algorithm(minimize=True)
+        result = self.needleman_wunsch_algorithm(minimize=True, alignment_cal=False)
 
         print(result['result_matrix'])
         print(result['traceback_matrix'])
         print('[Edit distance] Cost={}'.format(result['score']))
         return result['score']
 
-    def needleman_wunsch_algorithm(self, minimize: bool) -> Dict[str, Any]:
+    def needleman_wunsch_algorithm(self, minimize: bool, alignment_cal: bool) -> Dict[str, Any]:
         '''
         Dynamic programming technique
         Reference: [l3a.pdf, slide #5] + [https://en.wikipedia.org/wiki/Needleman–Wunsch_algorithm]
@@ -98,12 +98,17 @@ class SequencesAnalyzer:
 
         if minimize:
             # Required for edit cost calculation
-            sign = 1
             score_func = self.edit_cost
         else:
             # Required for similarity calculation
             score_func = self.score
+
+        if alignment_cal:
+            # Required if global alignment is being calculated -> first rows and columns should have negative sign
             sign = -1
+        else:
+            # Required if similarity or edit cost is being calculated -> first rows and columns should be positive
+            sign = 1
 
         # Put sequences' letters into first row and first column (better visualization)
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
