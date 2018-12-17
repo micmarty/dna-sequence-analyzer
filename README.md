@@ -21,9 +21,9 @@ Options:
 
 ## Requirements
 - Python 3.7 (type annotations)
-- numpy
-- pandas
-- click (CLI)
+- numpy (storing matrices)
+- pandas (loading CSV into DataFrame)
+- click (CLI interface)
 
 `pip install -r requirements.txt`
 
@@ -35,6 +35,23 @@ python analyze.py AGCT AGGT --edit-distance
 python analyze.py AGCT AGGT --edit-distance --load-csv
 python analyze.py AGCT AGGT --alignment local
 python analyze.py AGCT AGGT --alignment global
+```
+
+Output examples:
+```
+python analyze.py ACCC ACCT -e
+
+[[0 1 2 3 4]
+ [1 0 1 2 3]
+ [2 1 0 1 2]
+ [3 2 1 0 1]
+ [4 3 2 1 1]]
+[['' 'A' 'C' 'C' 'T']
+ ['A' '↖' '←' '←' '←']
+ ['C' '↑' '↖' '↖' '←']
+ ['C' '↑' '↖' '↖' '←']
+ ['C' '↑' '↖' '↖' '↖']]
+[Edit distance] Cost=1
 ```
 
 # Customization
