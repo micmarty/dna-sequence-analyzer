@@ -1,7 +1,6 @@
 import click
 from SequenceAnalyzer import SequencesAnalyzer
 
-
 @click.command()
 @click.argument('sequence_a')
 @click.argument('sequence_b')
@@ -9,9 +8,10 @@ from SequenceAnalyzer import SequencesAnalyzer
 @click.option('-s', '--similarity', is_flag=True)
 @click.option('-e', '--edit-distance', is_flag=True)
 @click.option('-a', '--alignment', type=click.Choice(['global', 'local']))
-@click.option('--scoring-matrix', type=click.Path(exists=True), help='Text file containing 5x5 matrix of integers separated by spaces and new line')
-def main(scoring_matrix, summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
-    analyzer = SequencesAnalyzer(sequence_a, sequence_b, scoring_matrix_path=scoring_matrix)
+#@click.option('--load', type=click.Path(exists=True), help='Text file containing 5x5 matrix of integers separated by spaces and new line')
+@click.option('--load-csv', is_flag=True, help='Load scores.csv and edit_cost.csv')
+def main(load_csv, summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
+    analyzer = SequencesAnalyzer(sequence_a, sequence_b, load_csv=load_csv)
 
     if summary:
         analyzer.edit_distance()
