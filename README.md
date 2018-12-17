@@ -16,6 +16,15 @@ Options:
   -a, --alignment [global|local]
   --help                          Show this message and exit.
 ```
+## Requirements
+- Python 3.7 (type annotations)
+- numpy
+- click (CLI)
+
+`pip install -r requirements.txt`
+
+
+
 ## Examples
 ```
 python analyze.py AGCT AGGT --summary
