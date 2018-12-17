@@ -4,10 +4,8 @@ from Translator import Translator
 
 @click.command()
 @click.argument('sequence')
-@click.option('-r', '--rna', is_flag=True)
-def main(sequence, rna):
-    if rna:
-        print(Translator.rna_sequence_to_protein(sequence))
+def main(sequence):
+    print(Translator(sequence).to_protein)
 
 
 if __name__ == '__main__':
