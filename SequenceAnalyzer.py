@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Tuple, Dict, Any
+from ScoringSystem import ScoringSystem
 
 '''
 Author: Michal Martyniak (github: @micmarty)
@@ -34,16 +35,29 @@ class SequencesAnalyzer:
         3: '•'
     }
 
-    def __init__(self, seq_a: str, seq_b: str) -> None:
+    def __init__(self, seq_a: str, seq_b: str, load_csv: bool) -> None:
         self.seq_a = seq_a
         self.seq_b = seq_b
+
+        self.scoring_sys = ScoringSystem(match=1, mismatch=-1, gap=-1)
+        self.edit_cost_sys = ScoringSystem(match=0, mismatch=1, gap=1)
+
+        if load_csv:
+            self.scoring_sys.load_csv('scores.csv')
+            self.edit_cost_sys.load_csv('edit_cost.csv')
+            print('[Scoring system]\n', self.scoring_sys)
+            print('[Edit cost system]\n', self.edit_cost_sys)
 
     def global_alignment(self) -> Tuple[str, str]:
         result = self.needleman_wunsch_algorithm(minimize=False, alignment_cal=True)
         alignment_a, alignment_b = self._tracebackGlobal(
             traceback_matrix=result['traceback_matrix'],
             start_pos=result['score_pos'])
-
+        print()
+        print('[Global Alignment] Score={}'.format(result['score']))
+        print('Result:\n', result['result_matrix'])
+        print('Traceback:\n', result['traceback_matrix'])
+        print('Alignment:')
         print(alignment_a)
         print(alignment_b)
         return alignment_a, alignment_b
@@ -54,10 +68,11 @@ class SequencesAnalyzer:
             result_matrix=result['result_matrix'],
             traceback_matrix=result['traceback_matrix'],
             start_pos=result['score_pos'])
-
-        print(result['result_matrix'])
-        print(result['traceback_matrix'])
+        print()
+        print('Result:\n', result['result_matrix'])
+        print('Traceback:\n', result['traceback_matrix'])
         print('[Local Alignment] Score={}'.format(result['score']))
+        print('Alignment:')
         print(alignment_a)
         print(alignment_b)
         return alignment_a, alignment_b
@@ -98,10 +113,10 @@ class SequencesAnalyzer:
 
         if minimize:
             # Required for edit cost calculation
-            score_func = self.edit_cost
+            score_func = self.edit_cost_sys.score
         else:
             # Required for similarity calculation
-            score_func = self.score
+            score_func = self.scoring_sys.score
 
         if alignment_cal:
             # Required if global alignment is being calculated -> first rows and columns should have negative sign
@@ -166,9 +181,10 @@ class SequencesAnalyzer:
                 a = self.seq_a[row - 1]
                 b = self.seq_b[col - 1]
 
-                leave_or_replace_letter = H[row - 1, col - 1] + self.score(a, b)
-                delete_indel = H[row - 1, col] + self.score('-', b)
-                insert_indel = H[row, col - 1] + self.score(a, '-')
+                score_func = self.scoring_sys.score
+                leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
+                delete_indel = H[row - 1, col] + score_func('-', b)
+                insert_indel = H[row, col - 1] + score_func(a, '-')
 
                 # Zero is required - ignore negative numbers
                 scores = [leave_or_replace_letter,
@@ -232,27 +248,27 @@ class SequencesAnalyzer:
             position[1] = position[1] - 1
             return '-', self.seq_b[position[1]]
 
-    # TODO Refactor score and edit_cost into separate class, allow for loading from file
-    def score(self, a, b):
-        assert isinstance(a, str) and isinstance(b, str)
-        assert len(a) == 1 and len(b) == 1
+    # # TODO Refactor score and edit_cost into separate class, allow for loading from file
+    # def score(self, a, b):
+    #     assert isinstance(a, str) and isinstance(b, str)
+    #     assert len(a) == 1 and len(b) == 1
 
-        match, mismatch, gap = 1, -1, -1
-        if a == b:
-            return match
-        else:
-            if '-' in [a, b]:
-                return gap
-            return mismatch
+    #     match, mismatch, gap = 1, -1, -
+    #     if a == b:
+    #         return match
+    #     else:
+    #         if '-' in [a, b]:
+    #             return gap
+    #         return mismatch
 
-    def edit_cost(self, a, b):
-        assert isinstance(a, str) and isinstance(b, str)
-        assert len(a) == 1 and len(b) == 1
+    # def edit_cost(self, a, b):
+    #     assert isinstance(a, str) and isinstance(b, str)
+    #     assert len(a) == 1 and len(b) == 1
 
-        match, mismatch, gap = 0, 1, 1
-        if a == b:
-            return match
-        else:
-            if '-' in [a, b]:
-                return gap
-            return mismatch
+    #     match, mismatch, gap = 0, 1, 1
+    #     if a == b:
+    #         return match
+    #     else:
+    #         if '-' in [a, b]:
+    #             return gap
+    #         return mismatch
