@@ -18,7 +18,14 @@ Options:
   --load-csv                      Load scores.csv and edit_cost.csv
   --help                          Show this message and exit.
 ```
+```
+Usage: translate.py [OPTIONS] [SEQUENCE]
 
+Options:
+  -i, --input-file FILE  Path to text file containing long nucleotide sequences (1 sequence = 1 line)
+  --help                 Show this message and exit.
+PS D:\Repos\dna-sequence-analyzer>
+```
 ## Requirements
 - Python 3.7 (type annotations)
 - numpy (storing matrices)
@@ -35,6 +42,9 @@ python analyze.py AGCT AGGT --edit-distance
 python analyze.py AGCT AGGT --edit-distance --load-csv
 python analyze.py AGCT AGGT --alignment local
 python analyze.py AGCT AGGT --alignment global
+
+python translate.py AUGACGGAGCUUCGGAGCUAG
+python translate.py --input-file rna.txt
 ```
 
 Output examples:
@@ -53,7 +63,12 @@ python analyze.py ACCC ACCT -e
  ['C' '↑' '↖' '↖' '↖']]
 [Edit distance] Cost=1
 ```
+```
+python translate.py --input-file rna.txt
 
+MNACFSNLCYESKSIGG
+MSDTLSQRLRASLGAIRIAFNLGRSAELD
+```
 # Customization
 Default scoring values: 
 ```python
