@@ -4,6 +4,8 @@ from ScoringSystem import ScoringSystem
 
 '''
 Author: Michal Martyniak (github: @micmarty)
+Artur Śliwa (@asliwa)
+Łukasz Reszetow (@lukaszreszetow)
 
 Helpful resources: https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/local.pdf
 Note: Smith Waterman and Needleman Wunsch algorithms are very, very similar but it's meant to be separated
@@ -11,22 +13,6 @@ Note: Smith Waterman and Needleman Wunsch algorithms are very, very similar but 
 
 
 class SequencesAnalyzer:
-    # similarity_matrix = {
-    #     'A': {'A': 1, 'G': 2, 'C': 2, 'T': 2, 'U': 2, '-': 0},
-    #     'G': {'A': -1, 'G': 1, 'C': 2, 'T': 2, 'U': 2, '-': 0},
-    #     'C': {'A': -1, 'G': 2, 'C': 1, 'T': 2, 'U': 2, '-': 0},
-    #     'T': {'A': -1, 'G': 2, 'C': 2, 'T': 1, 'U': 2, '-': 0},
-    #     'U': {'A': -1, 'G': -1, 'C': 2, 'T': 2, 'U': 1, '-': 0},
-    #     '-': {'A': 0, 'G': 0, 'C': 0, 'T': 0, 'U': 0, '-': 1}
-    # }
-    # replacement_cost = {
-    #     'A': {'A': 0, 'G': 2, 'C': 2, 'T': 2, 'U': 2, '-': 1},
-    #     'G': {'A': 2, 'G': 0, 'C': 2, 'T': 2, 'U': 2, '-': 1},
-    #     'C': {'A': 2, 'G': 2, 'C': 0, 'T': 2, 'U': 2, '-': 1},
-    #     'T': {'A': 2, 'G': 2, 'C': 2, 'T': 0, 'U': 2, '-': 1},
-    #     'U': {'A': 2, 'G': 2, 'C': 2, 'T': 2, 'U': 0, '-': 1},
-    #     '-': {'A': 1, 'G': 1, 'C': 1, 'T': 1, 'U': 1, '-': 0}
-    # }
 
     traceback_symbols = {
         0: '↖',
@@ -238,37 +224,12 @@ class SequencesAnalyzer:
         # Use arrows to navigate and collect letters (in reversed order)
         # Shift indexes by one (matrix has additional row and column)
         if symbol == '↖':
-            position[0] = position[0] - 1
-            position[1] = position[1] - 1
+            position[0] -= 1
+            position[1] -= 1
             return self.seq_a[position[0]], self.seq_b[position[1]]
         elif symbol == '↑':
-            position[0] = position[0] - 1
+            position[0] -= 1
             return self.seq_a[position[0]], '-'
         elif symbol == '←':
-            position[1] = position[1] - 1
+            position[1] -= 1
             return '-', self.seq_b[position[1]]
-
-    # # TODO Refactor score and edit_cost into separate class, allow for loading from file
-    # def score(self, a, b):
-    #     assert isinstance(a, str) and isinstance(b, str)
-    #     assert len(a) == 1 and len(b) == 1
-
-    #     match, mismatch, gap = 1, -1, -
-    #     if a == b:
-    #         return match
-    #     else:
-    #         if '-' in [a, b]:
-    #             return gap
-    #         return mismatch
-
-    # def edit_cost(self, a, b):
-    #     assert isinstance(a, str) and isinstance(b, str)
-    #     assert len(a) == 1 and len(b) == 1
-
-    #     match, mismatch, gap = 0, 1, 1
-    #     if a == b:
-    #         return match
-    #     else:
-    #         if '-' in [a, b]:
-    #             return gap
-    #         return mismatch
