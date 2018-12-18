@@ -1,8 +1,15 @@
-# dna-sequence-analyzer
+![](https://img.shields.io/badge/python-3.7-blue.svg?style=popout-square)
+![](https://img.shields.io/badge/platform-Linux_|%20Windows%20|_macOS-blue.svg?style=popout-square)
+![](https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=popout-square)
+
+# Sequence analyzer (bioinformatics)
+
+## About
+This is a set of simple command-line python scripts with [101](https://dictionary.cambridge.org/dictionary/english/101) algorihtms used in bioinformatics.
 
 ## Features
-- Local alignment (Smith-Waterman algorithm)
-- Global alignment (Needleman-Wunsch algorithm)
+- Pariwise local alignment (Smith-Waterman algorithm)
+- Pairwise global alignment (Needleman-Wunsch algorithm)
 - Edit distance and similarity (Needleman-Wunsch algorithm)
 - RNA to amino acids translation
 
@@ -24,21 +31,7 @@ Usage: translate.py [OPTIONS] [SEQUENCE]
 Options:
   -i, --input-file FILE  Path to text file containing long nucleotide sequences (1 sequence = 1 line)
   --help                 Show this message and exit.
-PS D:\Repos\dna-sequence-analyzer>
 ```
-## Requirements
-- Python 3.7 (type annotations)
-- numpy (storing matrices)
-- pandas (loading CSV into DataFrame)
-- click (CLI interface)
-
-We recommend using `conda`/`virtualenv`/`pyenv` environment (this step is optional)
-
-`conda create --name sequence-analyzer-env python=3.7 pip`
-
-## Requirements installation
-
-`pip install -r requirements.txt`
 
 ## Usage examples
 ```
@@ -75,14 +68,32 @@ python translate.py --input-file rna.txt
 MNACFSNLCYESKSIGG
 MSDTLSQRLRASLGAIRIAFNLGRSAELD
 ```
-# Customization
+
+## Requirements
+- Python 3.7 (type annotations)
+- numpy (storing matrices)
+- pandas (loading CSV into DataFrame)
+- click (CLI interface)
+
+We recommend using `conda`/`virtualenv`/`pyenv` environment (this step is optional)
+
+`conda create --name sequence-analyzer-env python=3.7 pip`
+
+## Requirements installation
+
+`pip install -r requirements.txt`
+
+
+## Customization
 Default scoring values: 
 ```python
 # SequenceAnalyzer.py
 self.scoring_sys = ScoringSystem(match=1, mismatch=-1, gap=-1)
 self.edit_cost_sys = ScoringSystem(match=0, mismatch=1, gap=1)
 ```
-You can set up your own similarity and edit cost matrices by adding `--load-csv` flag:
+You can set up your own similarity and edit cost matrices by adding `--load-csv` flag
+
+(these files are read by default)
 
 **scores.csv**
 
@@ -92,4 +103,14 @@ You can set up your own similarity and edit cost matrices by adding `--load-csv`
 
 ![image](https://user-images.githubusercontent.com/12485656/50089142-43f91480-0205-11e9-8d93-bc05449c039d.png)
 
+(Note: if any of your sequences contains invalid symbols, default values from `ScoringSystem` will be used instead)
 
+## Credits
+- ![](https://avatars2.githubusercontent.com/u/12485656?s=22&v=4) [Michał Martyniak (@micmarty)](http://martyniak.me)
+- Artur Śliwa [(@asliwa)](https://github.com/asliwa)
+
+## License
+
+Feel free play around with our code. If you see any bugs, please tell us about them in issues :heart:!
+
+[Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
