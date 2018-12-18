@@ -3,17 +3,24 @@ from typing import Tuple, Dict, Any
 from ScoringSystem import ScoringSystem
 
 '''
-Author: Michal Martyniak (github: @micmarty)
-Artur Śliwa (@asliwa)
-Łukasz Reszetow (@lukaszreszetow)
+Authors:
+- Michal Martyniak (github: @micmarty)
+- Artur Śliwa (@asliwa)
 
-Helpful resources: https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/local.pdf
-Note: Smith Waterman and Needleman Wunsch algorithms are very, very similar but it's meant to be separated
+Helpful resources:
+- https://en.wikipedia.org/wiki/Needleman–Wunsch_algorithm
+- https://en.wikipedia.org/wiki/Smith–Waterman_algorithm
+- https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/local.pdf
+
+Algorithms: Needleman-Wunch, Smith-Waterman (dynamic programming technique)
+- Time complexity: O(nm)
+- Space complexity: O(nm)
 '''
 
 
 class SequencesAnalyzer:
 
+    # Useful for visualization
     traceback_symbols = {
         0: '↖',
         1: '↑',
@@ -21,7 +28,7 @@ class SequencesAnalyzer:
         3: '•'
     }
 
-    def __init__(self, seq_a: str, seq_b: str, load_csv: bool) -> None:
+    def __init__(self, seq_a: str, seq_b: str, load_csv: bool = False) -> None:
         self.seq_a = seq_a
         self.seq_b = seq_b
 
@@ -31,63 +38,69 @@ class SequencesAnalyzer:
         if load_csv:
             self.scoring_sys.load_csv('scores.csv')
             self.edit_cost_sys.load_csv('edit_cost.csv')
+
+            # Show what's inside the files
             print('[Scoring system]\n', self.scoring_sys)
             print('[Edit cost system]\n', self.edit_cost_sys)
 
     def global_alignment(self) -> Tuple[str, str]:
-        result = self.needleman_wunsch_algorithm(minimize=False, alignment_cal=True)
-        alignment_a, alignment_b = self._tracebackGlobal(
+        result: Dict[str, Any] = self.needleman_wunsch_algorithm(
+            minimize=False, alignment_cal=True)
+        alignment_a, alignment_b = self._traceback(
+            result_matrix=result['result_matrix'],
             traceback_matrix=result['traceback_matrix'],
-            start_pos=result['score_pos'])
-        print()
-        print('[Global Alignment] Score={}'.format(result['score']))
-        print('Result:\n', result['result_matrix'])
-        print('Traceback:\n', result['traceback_matrix'])
-        print('Alignment:')
-        print(alignment_a)
-        print(alignment_b)
+            start_pos=result['score_pos'],
+            global_alignment=True)
+
+        print(
+            f"[Global Alignment] Score={result['score']}\n"
+            f"Result:\n {result['result_matrix']}\n"
+            f"Traceback:\n {result['traceback_matrix']}\n"
+            f"Alignment:\n {alignment_a}\n {alignment_b}\n"
+        )
+
         return alignment_a, alignment_b
 
     def local_alignment(self) -> Tuple[str, str]:
-        result = self.smith_waterman_algorithm()
-        alignment_a, alignment_b = self._tracebackLocal(
+        result: Dict[str, Any] = self.smith_waterman_algorithm()
+        alignment_a, alignment_b = self._traceback(
             result_matrix=result['result_matrix'],
             traceback_matrix=result['traceback_matrix'],
-            start_pos=result['score_pos'])
-        print()
-        print('Result:\n', result['result_matrix'])
-        print('Traceback:\n', result['traceback_matrix'])
-        print('[Local Alignment] Score={}'.format(result['score']))
-        print('Alignment:')
-        print(alignment_a)
-        print(alignment_b)
+            start_pos=result['score_pos'],
+            global_alignment=False)
+
+        print(
+            f"[Local Alignment] Score={result['score']}\n"
+            f"Result:\n {result['result_matrix']}\n"
+            f"Traceback:\n {result['traceback_matrix']}\n"
+            f"Alignment:\n {alignment_a}\n {alignment_b}\n"
+        )
         return alignment_a, alignment_b
 
     def similarity(self) -> int:
-        result = self.needleman_wunsch_algorithm(minimize=False, alignment_cal=False)
+        result = self.needleman_wunsch_algorithm(minimize=False)
 
-        print(result['result_matrix'])
-        print(result['traceback_matrix'])
-        print('[Similarity] Score={}'.format(result['score']))
+        print(
+            f"[Similarity] Score={result['score']}\n"
+            f"{result['result_matrix']}\n"
+            f"{result['traceback_matrix']}\n"
+        )
         return result['score']
 
     def edit_distance(self) -> int:
-        result = self.needleman_wunsch_algorithm(minimize=True, alignment_cal=False)
+        result = self.needleman_wunsch_algorithm(minimize=True)
 
-        print(result['result_matrix'])
-        print(result['traceback_matrix'])
-        print('[Edit distance] Cost={}'.format(result['score']))
+        print(
+            f"[Edit distance] Cost={result['score']}\n"
+            f"{result['result_matrix']}\n"
+            f"{result['traceback_matrix']}\n"
+        )
         return result['score']
 
-    def needleman_wunsch_algorithm(self, minimize: bool, alignment_cal: bool) -> Dict[str, Any]:
+    def needleman_wunsch_algorithm(self, minimize: bool = False, alignment_cal: bool = False) -> Dict[str, Any]:
         '''
-        Dynamic programming technique
-        Reference: [l3a.pdf, slide #5] + [https://en.wikipedia.org/wiki/Needleman–Wunsch_algorithm]
-        Algorithm: Needleman-Wunch
-        Time complexity: O(nm)
-        Space complexity: O(nm)
-
-        `minimize` is a flag which needs to be enabled when calculating edit distance
+        `minimize` - set to True when calculating edit distance
+        `alignment_cal` - set to True when calculating global alignment
         '''
         # 1. Prepare dimensions (required additional 1 column and 1 row)
         rows, cols = len(self.seq_a) + 1, len(self.seq_b) + 1
@@ -98,26 +111,26 @@ class SequencesAnalyzer:
         traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
 
         if minimize:
-            # Required for edit cost calculation
+            # Edit cost calculation
             score_func = self.edit_cost_sys.score
         else:
-            # Required for similarity calculation
+            # Similarity calculation
             score_func = self.scoring_sys.score
 
         if alignment_cal:
-            # Required if global alignment is being calculated -> first rows and columns should have negative sign
+            # Global alignment calculation -> 1st row and column need to have negative values
             sign = -1
         else:
-            # Required if similarity or edit cost is being calculated -> first rows and columns should be positive
+            # Similarity or edit cost calculation -> 1st first row and column values need to be positive
             sign = 1
 
-        # Put sequences' letters into first row and first column (better visualization)
+        # Put sequences' letters into 1st row and 1st column (for better visualization)
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
         traceback[1:, 0] = np.array(list(self.seq_a), dtype=str)
 
         # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
-        H[0, :] = np.arange(start=0, stop=sign*cols, step=sign*1)
-        H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign*1)
+        H[0, :] = np.arange(start=0, stop=sign*cols, step=sign)
+        H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign)
 
         for row in range(1, rows):
             for col in range(1, cols):
@@ -125,7 +138,8 @@ class SequencesAnalyzer:
                 a = self.seq_a[row - 1]
                 b = self.seq_b[col - 1]
 
-                leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
+                leave_or_replace_letter = H[row -
+                    1, col - 1] + score_func(a, b)
                 delete_indel = H[row - 1, col] + score_func('-', b)
                 insert_indel = H[row, col - 1] + score_func(a, '-')
 
@@ -142,12 +156,16 @@ class SequencesAnalyzer:
         return {
             'result_matrix': H,
             'traceback_matrix': traceback,
-            'score': H[-1, -1],
-            'score_pos': (rows - 1, cols - 1)
+            'score': H[-1, -1],                 # Always right-bottom corner
+            'score_pos': (rows - 1, cols - 1)   # as above...
         }
 
     def smith_waterman_algorithm(self) -> Dict[str, Any]:
-        # TODO Add description similar to needleman-wunsch
+        '''
+        Note: Smith-Waterman and Needleman-Wunsch algorithms
+        are very similar, but because there are small differences,
+        they are meant to be separated.
+        '''
         # 1. Prepare dimensions (required additional 1 column and 1 row)
         rows, cols = len(self.seq_a) + 1, len(self.seq_b) + 1
 
@@ -155,6 +173,8 @@ class SequencesAnalyzer:
         # Use grid/matrix as graph-like acyclic digraph (array cells are vertices)
         H = np.zeros(shape=(rows, cols), dtype=int)
         traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
+
+        # Difference 1: 1st row and 1st column are already zeroed
 
         # Put sequences' letters into first row and first column (better visualization)
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
@@ -168,13 +188,14 @@ class SequencesAnalyzer:
                 b = self.seq_b[col - 1]
 
                 score_func = self.scoring_sys.score
-                leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
+                leave_or_replace_letter = H[row -
+                    1, col - 1] + score_func(a, b)
                 delete_indel = H[row - 1, col] + score_func('-', b)
                 insert_indel = H[row, col - 1] + score_func(a, '-')
 
-                # Zero is required - ignore negative numbers
+                # Difference 2: That additional 0 is required (ignore negative values)
                 scores = [leave_or_replace_letter,
-                          delete_indel, insert_indel, 0]
+                    delete_indel, insert_indel, 0]
                 best_action = np.argmax(scores)
 
                 H[row, col] = scores[best_action]
@@ -184,52 +205,95 @@ class SequencesAnalyzer:
             'result_matrix': H,
             'traceback_matrix': traceback,
             'score': H.max(),
+            # Force numpy to return last result
+            # Source: (Step 2: Backtracing) https://tiefenauer.github.io/blog/smith-waterman
             'score_pos': np.unravel_index(np.argmax(H, axis=None), H.shape)
         }
 
-    def _tracebackLocal(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
-        '''Use both matrices to replay the optimal route'''
+    def _traceback(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int], global_alignment: bool) -> Tuple[str, str]:
         seq_a_aligned = ''
         seq_b_aligned = ''
 
         # 1. Select starting point
-        position = list(start_pos)
+        row, col = start_pos
 
-        # 2. Terminate when 0 is reached (end of path)
-        while result_matrix[position[0], position[1]] != 0:
-            symbol = traceback_matrix[position[0], position[1]]
-            letter_pair = self.translateArrow(symbol, position)
-            seq_a_aligned += letter_pair[0]
-            seq_b_aligned += letter_pair[1]
+        if global_alignment:
+            # Terminate when top left corner (0,0) is reached (end of path)
+            end_condition_reached = lambda row, col: row == 0 and col == 0
+        else:
+            # Terminate when 0 is reached
+            end_condition_reached = lambda row, col: result_matrix[row, col] == 0
+
+        while not end_condition_reached(row, col):
+            symbol = traceback_matrix[row, col]
+            # Use arrows to navigate and collect letters (in reversed order)
+            # Shift/reverse indexes by one beforehand (we want to get the letter that arrow points to)
+            if symbol == '↖':
+                row -= 1
+                col -= 1
+                letter_a, letter_b = self.seq_a[row], self.seq_b[col]
+            elif symbol == '↑':
+                row -= 1
+                letter_a, letter_b = self.seq_a[row], '-'
+            elif symbol == '←':
+                col -= 1
+                letter_a, letter_b = '-', self.seq_b[col]
+
+            # Acumulate letter (in reversed order)
+            seq_a_aligned += letter_a
+            seq_b_aligned += letter_b
+
         # Reverse strings (traceback goes from bottom-right to top-left)
         return seq_a_aligned[::-1], seq_b_aligned[::-1]
 
-    def _tracebackGlobal(self, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
-        seq_a_aligned = ''
-        seq_b_aligned = ''
+    # def _traceback_local(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
+    #     '''Use both matrices to replay the optimal route'''
+    #     seq_a_aligned = ''
+    #     seq_b_aligned = ''
 
-        # 1. Select starting point
-        position = list(start_pos)
+    #     # 1. Select starting point
+    #     position = list(start_pos)
 
-        # 2. Terminate when top left corner (0,0) is reached (end of path)
-        while all(x != 0 for x in position):
-            symbol = traceback_matrix[position[0], position[1]]
-            letter_pair = self.translateArrow(symbol, position)
-            seq_a_aligned += letter_pair[0]
-            seq_b_aligned += letter_pair[1]
-        # Reverse strings (traceback goes from bottom-right to top-left)
-        return seq_a_aligned[::-1], seq_b_aligned[::-1]
+    #     # 2. Terminate when 0 is reached (end of path)
+    #     while result_matrix[position[0], position[1]] != 0:
+    #         symbol = traceback_matrix[position[0], position[1]]
 
-    def translateArrow(self, symbol, position) -> Tuple[str, str]:
-        # Use arrows to navigate and collect letters (in reversed order)
-        # Shift indexes by one (matrix has additional row and column)
-        if symbol == '↖':
-            position[0] -= 1
-            position[1] -= 1
-            return self.seq_a[position[0]], self.seq_b[position[1]]
-        elif symbol == '↑':
-            position[0] -= 1
-            return self.seq_a[position[0]], '-'
-        elif symbol == '←':
-            position[1] -= 1
-            return '-', self.seq_b[position[1]]
+            
+
+    #         letter_pair = self.translateArrow(symbol, position)
+    #         seq_a_aligned += letter_pair[0]
+    #         seq_b_aligned += letter_pair[1]
+    #     # Reverse strings (traceback goes from bottom-right to top-left)
+    #     return seq_a_aligned[::-1], seq_b_aligned[::-1]
+
+    # def _traceback_global(self, traceback_matrix, start_pos: Tuple[int, int]) -> Tuple[str, str]:
+    #     seq_a_aligned = ''
+    #     seq_b_aligned = ''
+
+    #     # 1. Select starting point
+    #     row, col = start_pos
+
+    #     # 2. Terminate when top left corner (0,0) is reached (end of path)
+    #     while not (row == 0 and col == 0):
+    #         symbol = traceback_matrix[row, col]
+    #         letter_a, letter_b = self._translate_arrow(symbol, pos=(row, col))
+    #         seq_a_aligned += letter_a
+    #         seq_b_aligned += letter_b
+    #     # Reverse strings (traceback goes from bottom-right to top-left)
+    #     return seq_a_aligned[::-1], seq_b_aligned[::-1]
+
+    # def _translate_arrow(self, symbol: str, pos: Tuple[int, int]) -> Tuple[str, str]:
+    #     '''
+        
+    #     '''
+    #     row, col = pos
+    #     if symbol == '↖':
+    #         row -= 1
+    #         col -= 1
+    #         return self.seq_a[row], self.seq_b[col]
+    #     elif symbol == '↑':
+    #         row -= 1
+    #         return self.seq_a[row], '-'
+    #     elif symbol == '←':
+    #         col -= 1
+    #         return '-', self.seq_b[col]
