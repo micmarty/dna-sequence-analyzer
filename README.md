@@ -32,6 +32,12 @@ PS D:\Repos\dna-sequence-analyzer>
 - pandas (loading CSV into DataFrame)
 - click (CLI interface)
 
+We recommend using `conda`/`virtualenv`/`pyenv` environment (this step is optional)
+
+`conda create --name sequence-analyzer-env python=3.7 pip`
+
+## Requirements installation
+
 `pip install -r requirements.txt`
 
 ## Usage examples
