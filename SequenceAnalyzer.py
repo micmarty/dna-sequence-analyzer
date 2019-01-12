@@ -177,54 +177,54 @@ class SequencesAnalyzer:
             'score_pos': (rows - 1, cols - 1)   # as above...
         }
 
-    def NWScore(self, seq_a, seq_b):
-        # 1. Prepare dimensions (required additional 1 column and 1 row)
-        rows, cols = len(seq_a) + 1, len(seq_b) + 1
+    # def NWScore(self, seq_a, seq_b):
+    #     # 1. Prepare dimensions (required additional 1 column and 1 row)
+    #     rows, cols = len(seq_a) + 1, len(seq_b) + 1
 
-        # 2. Initialize matrices
-        # Use grid/matrix as graph-like acyclic digraph (array cells are vertices)
-        H = np.zeros(shape=(rows, cols), dtype=int)
-        traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
+    #     # 2. Initialize matrices
+    #     # Use grid/matrix as graph-like acyclic digraph (array cells are vertices)
+    #     H = np.zeros(shape=(rows, cols), dtype=int)
+    #     traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
 
-        # Similarity calculation
-        score_func = self.scoring_sys.score
+    #     # Similarity calculation
+    #     score_func = self.scoring_sys.score
 
-        # Global alignment calculation -> 1st row and column need to have negative values
-        sign = self.scoring_sys.gap
+    #     # Global alignment calculation -> 1st row and column need to have negative values
+    #     sign = self.scoring_sys.gap
 
-        # Put sequences' letters into 1st row and 1st column (for better visualization)
-        traceback[0, 1:] = np.array(list(seq_b), dtype=str)
-        traceback[1:, 0] = np.array(list(seq_a), dtype=str)
+    #     # Put sequences' letters into 1st row and 1st column (for better visualization)
+    #     traceback[0, 1:] = np.array(list(seq_b), dtype=str)
+    #     traceback[1:, 0] = np.array(list(seq_a), dtype=str)
     
-        # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
-        H[0, :] = np.arange(start=0, stop=sign*cols, step=sign)
-        H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign)
+    #     # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
+    #     H[0, :] = np.arange(start=0, stop=sign*cols, step=sign)
+    #     H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign)
 
-        for row in range(1, rows):
-            for col in range(1, cols):
-                # Current pair of letters from sequence A and B
-                a = seq_a[row - 1]
-                b = seq_b[col - 1]
+    #     for row in range(1, rows):
+    #         for col in range(1, cols):
+    #             # Current pair of letters from sequence A and B
+    #             a = seq_a[row - 1]
+    #             b = seq_b[col - 1]
 
-                leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
-                delete_indel = H[row - 1, col] +  score_func('-', b)
-                insert_indel = H[row, col - 1] + score_func(a, '-')
+    #             leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
+    #             delete_indel = H[row - 1, col] +  score_func('-', b)
+    #             insert_indel = H[row, col - 1] + score_func(a, '-')
 
-                scores = [leave_or_replace_letter, delete_indel, insert_indel]
-                best_action = np.argmax(scores)
+    #             scores = [leave_or_replace_letter, delete_indel, insert_indel]
+    #             best_action = np.argmax(scores)
 
-                H[row, col] = scores[best_action]
-                traceback[row, col] = self.traceback_symbols[best_action]
-        return H[-1, :]
-        # return {
-        #     'result_matrix': H,
-        #     'traceback_matrix': traceback,
-        #     'score': H[-1, -1],                 # Always right-bottom corner
-        #     'score_pos': (rows - 1, cols - 1)   # as above...
-        # }
+    #             H[row, col] = scores[best_action]
+    #             traceback[row, col] = self.traceback_symbols[best_action]
+    #     return H[-1, :]
+    #     # return {
+    #     #     'result_matrix': H,
+    #     #     'traceback_matrix': traceback,
+    #     #     'score': H[-1, -1],                 # Always right-bottom corner
+    #     #     'score_pos': (rows - 1, cols - 1)   # as above...
+    #     # }
 
-    def hirschberg_global_alignment(self):
-        pass
+    # def hirschberg_global_alignment(self):
+    #     pass
 
     def smith_waterman_algorithm(self) -> Dict[str, Any]:
         '''
@@ -276,46 +276,46 @@ class SequencesAnalyzer:
             'score_pos': np.unravel_index(np.argmax(H, axis=None), H.shape)
         }
 
-    def hirschberg_algorithm(self, X, Y):
-        '''
-        Hirschberg’s algorithm uses Θ(m +n) space.
+    # def hirschberg_algorithm(self, X, Y):
+    #     '''
+    #     Hirschberg’s algorithm uses Θ(m +n) space.
 
-        - Each recursive call uses Θ(m) space to compute f (·, n / 2) and g(·, n / 2).
-        - Only Θ(1) space needs to be maintained per recursive call.
-        - Number of recursive calls ≤ n. ▪
-        '''
-        Z = ''
-        W = ''
-        Q = ''
-        E = ''
-        aligned_X = ''
-        aligned_Y = ''
+    #     - Each recursive call uses Θ(m) space to compute f (·, n / 2) and g(·, n / 2).
+    #     - Only Θ(1) space needs to be maintained per recursive call.
+    #     - Number of recursive calls ≤ n. ▪
+    #     '''
+    #     Z = ''
+    #     W = ''
+    #     Q = ''
+    #     E = ''
+    #     aligned_X = ''
+    #     aligned_Y = ''
 
-        if len(X) == 0:
-            for i in range(0, len(Y)):
-                Z += '-'
-                W += Y[i]
-            print(f'{Z}->{W}')
-        elif len(Y) == 0:
-            for i in range(0, len(X)):
-                Z += X[i] 
-                W += '-'
-            print(f'{Z}->{W}')
-        elif len(X) == 1 or len(Y) == 1:
-            # Z, W = self.NWScore(seq_a=self.seq_a.copy(), seq_b=self.seq_b.copy())
-            print(f'{X}->{Y}')
-        else:
-            x_len = len(X)
-            x_mid = int(len(X) // 2)
-            y_len = len(Y)
+    #     if len(X) == 0:
+    #         for i in range(0, len(Y)):
+    #             Z += '-'
+    #             W += Y[i]
+    #         print(f'{Z}->{W}')
+    #     elif len(Y) == 0:
+    #         for i in range(0, len(X)):
+    #             Z += X[i] 
+    #             W += '-'
+    #         print(f'{Z}->{W}')
+    #     elif len(X) == 1 or len(Y) == 1:
+    #         # Z, W = self.NWScore(seq_a=self.seq_a.copy(), seq_b=self.seq_b.copy())
+    #         print(f'{X}->{Y}')
+    #     else:
+    #         x_len = len(X)
+    #         x_mid = int(len(X) // 2)
+    #         y_len = len(Y)
 
-            score_left = self.NWScore(seq_a=X[0:x_mid], seq_b=Y)
-            rev_a = X[x_mid:x_len]
-            score_right = self.NWScore(seq_a=rev_a[::-1], seq_b=Y[::-1])
-            y_mid = np.argmax(score_left + np.flip(score_right))
-            Z, W = self.hirschberg_algorithm(X=X[0:x_mid], Y=Y[0:y_mid])
-            Q, E = self.hirschberg_algorithm(X=X[x_mid:x_len], Y=Y[y_mid:y_len])
-        return Z+Q, W+E
+    #         score_left = self.NWScore(seq_a=X[0:x_mid], seq_b=Y)
+    #         rev_a = X[x_mid:x_len]
+    #         score_right = self.NWScore(seq_a=rev_a[::-1], seq_b=Y[::-1])
+    #         y_mid = np.argmax(score_left + np.flip(score_right))
+    #         Z, W = self.hirschberg_algorithm(X=X[0:x_mid], Y=Y[0:y_mid])
+    #         Q, E = self.hirschberg_algorithm(X=X[x_mid:x_len], Y=Y[y_mid:y_len])
+    #     return Z+Q, W+E
 
     def _traceback(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int], global_alignment: bool) -> Tuple[str, str]:
         seq_a_aligned = ''
