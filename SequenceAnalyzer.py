@@ -112,7 +112,7 @@ class SequencesAnalyzer:
         traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
 
         # 3. msadkjnsadkjn;sdf
-        gapH = np.zeros(shape=(rows, cols), dtype=int)
+        # gapH = np.zeros(shape=(rows, cols), dtype=int)
 
         if minimize:
             # Edit cost calculation
@@ -145,17 +145,17 @@ class SequencesAnalyzer:
                 leave_or_replace_letter = H[row -
                     1, col - 1] + score_func(a, b)
 
-                if gapH[row - 1, col] == 0:
-                    score = score_func('-', b)
-                else:
-                    score = 0
-                delete_indel = H[row - 1, col] + score
+                # if gapH[row - 1, col] == 0:
+                #     score = score_func('-', b)
+                # else:
+                #     score = 0
+                delete_indel = H[row - 1, col] + score_func('-', b)
 
-                if gapH[row, col - 1] == 0:
-                    score = score_func(a, '-')
-                else:
-                    score = 0
-                insert_indel = H[row, col - 1] + score
+                # if gapH[row, col - 1] == 0:
+                #     score = score_func(a, '-')
+                # else:
+                #     score = 0
+                insert_indel = H[row, col - 1] + score_func(a, '-')
 
                 scores = [leave_or_replace_letter, delete_indel, insert_indel]
 
@@ -163,13 +163,13 @@ class SequencesAnalyzer:
                     best_action = np.argmin(scores)
                 else:
                     best_action = np.argmax(scores)
-                    if best_action in [1, 2]:
-                        gapH[row, col] = True
+                    # if best_action in [1, 2]:
+                    #     gapH[row, col] = True
 
                 H[row, col] = scores[best_action]
                 traceback[row, col] = self.traceback_symbols[best_action]
 
-        print(gapH)
+        # print(gapH)
         return {
             'result_matrix': H,
             'traceback_matrix': traceback,
