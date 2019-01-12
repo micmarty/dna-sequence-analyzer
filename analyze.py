@@ -42,7 +42,13 @@ def main(load_csv, summary, similarity, edit_distance, sequence_a, sequence_b, a
         analyzer.local_alignment()
     elif alignment == 'global':
         print('Needleman-Wunsch (with start gap penalty)')
-        scoring_sys = ScoringSystem(match=match, mismatch=mismatch, gap_start=gap_start, gap=gap)
+        if load_csv:
+            scoring_sys = ScoringSystem(gap_start=gap_start)
+            scoring_sys.load_csv('scores.csv')
+            # Show what's inside the files
+            print('[Custom scoring system]\n', scoring_sys)
+        else:
+            scoring_sys = ScoringSystem(match=match, mismatch=mismatch, gap_start=gap_start, gap=gap)
         NeedlemanWunschAlgorithm(scoring_sys).align(sequence_a, sequence_b, start_gap_penalty_mode=True)
 
         print('Hirschberg (without start gap penalty)')
