@@ -1,6 +1,7 @@
 import click
 from SequenceAnalyzer import SequencesAnalyzer
 from HirschbergAlgorithm import HirschbergAlgorithm
+from NeedlemanWunschAlgorithm import NeedlemanWunschAlgorithm
 from ScoringSystem import ScoringSystem
 
 @click.command()
@@ -11,7 +12,7 @@ from ScoringSystem import ScoringSystem
 @click.option('-e', '--edit-distance', is_flag=True)
 @click.option('-a', '--alignment', type=click.Choice(['global', 'local']))
 
-@click.option('--gap-start', default=-1, help='When gap starts, that score will be applied (besides `gap` penalty).')
+@click.option('--gap-start', default=0, help='When gap starts, that score will be applied (besides `gap` penalty).')
 @click.option('--gap', default=-1, help='Penalty for a single gap.')
 @click.option('--match', default=1, help='Score for identical letters in both seqences.')
 @click.option('--mismatch', default=-1, help='Score for mismatched letters in both seqences.')
@@ -40,12 +41,12 @@ def main(load_csv, summary, similarity, edit_distance, sequence_a, sequence_b, a
     if alignment == 'local':
         analyzer.local_alignment()
     elif alignment == 'global':
-        analyzer.global_alignment()
-        print('--------------------------')
-        #analyzer.hirschberg_algorithm(X=analyzer.seq_a, Y=analyzer.seq_b)
-        scoring_sys = ScoringSystem(match=2, mismatch=-1, gap=-2)
-        HirschbergAlgorithm(scoring_sys).align(sequence_a, sequence_b)
+        print('Needleman-Wunsch (with start gap penalty)')
+        scoring_sys = ScoringSystem(match=match, mismatch=mismatch, gap_start=gap_start, gap=gap)
+        NeedlemanWunschAlgorithm(scoring_sys).align(sequence_a, sequence_b, start_gap_penalty_mode=True)
 
+        print('Hirschberg (without start gap penalty)')
+        HirschbergAlgorithm(scoring_sys).align(sequence_a, sequence_b)
 
 if __name__ == '__main__':
     main()
