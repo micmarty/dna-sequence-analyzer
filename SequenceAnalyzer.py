@@ -32,7 +32,7 @@ class SequencesAnalyzer:
         self.seq_a = seq_a
         self.seq_b = seq_b
 
-        self.scoring_sys = ScoringSystem(match=1, mismatch=-1, gap=-1)
+        self.scoring_sys = ScoringSystem(match=1, mismatch=-1, gap=-2)
         self.edit_cost_sys = ScoringSystem(match=0, mismatch=1, gap=1)
 
         if load_csv:
@@ -119,7 +119,7 @@ class SequencesAnalyzer:
 
         if alignment_cal:
             # Global alignment calculation -> 1st row and column need to have negative values
-            sign = -1
+            sign = self.scoring_sys.gap
         else:
             # Similarity or edit cost calculation -> 1st first row and column values need to be positive
             sign = 1
@@ -127,9 +127,7 @@ class SequencesAnalyzer:
         # Put sequences' letters into 1st row and 1st column (for better visualization)
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
         traceback[1:, 0] = np.array(list(self.seq_a), dtype=str)
-        traceback[1:, 0] = '↑'
-        traceback[0, 1:] = '←'
-        
+    
         # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
         H[0, :] = np.arange(start=0, stop=sign*cols, step=sign)
         H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign)
@@ -212,6 +210,16 @@ class SequencesAnalyzer:
             'score_pos': np.unravel_index(np.argmax(H, axis=None), H.shape)
         }
 
+    def hirschberg_algorithm(self) -> Dict[str, Any]:
+        '''
+        Hirschberg’s algorithm uses Θ(m +n) space.
+
+        - Each recursive call uses Θ(m) space to compute f (·, n / 2) and g(·, n / 2).
+        - Only Θ(1) space needs to be maintained per recursive call.
+        - Number of recursive calls ≤ n. ▪
+        '''
+        pass
+
     def _traceback(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int], global_alignment: bool) -> Tuple[str, str]:
         seq_a_aligned = ''
         seq_b_aligned = ''
@@ -228,6 +236,10 @@ class SequencesAnalyzer:
 
         while not end_condition_reached(row, col):
             symbol = traceback_matrix[row, col]
+            if row == 0:
+                symbol = '↑'
+            if col == 0:
+                symbol = '←'
             # Use arrows to navigate and collect letters (in reversed order)
             # Shift/reverse indexes by one beforehand (we want to get the letter that arrow points to)
             if symbol == '↖':
