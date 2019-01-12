@@ -122,7 +122,7 @@ class SequencesAnalyzer:
 
         if alignment_cal:
             # Global alignment calculation -> 1st row and column need to have negative values
-            sign = self.scoring_sys.gap
+            sign = -1 #self.scoring_sys.gap
         else:
             # Similarity or edit cost calculation -> 1st first row and column values need to be positive
             sign = 1
@@ -132,8 +132,12 @@ class SequencesAnalyzer:
         traceback[1:, 0] = np.array(list(self.seq_a), dtype=str)
     
         # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
-        H[0, :] = np.arange(start=0, stop=sign*cols, step=sign)
-        H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign)
+        H[1, 0] = -4
+        H[0, 1] = -4
+        for row in range(2, rows):
+            H[row, 0] = H[row -1, 0] - 1
+        for col in range(2, cols):
+            H[0, col] = H[0, col -1 ] - 1
 
         for row in range(1, rows):
             for col in range(1, cols):
@@ -145,15 +149,17 @@ class SequencesAnalyzer:
                     1, col - 1] + score_func(a, b)
 
                 if gapH[row - 1, col] == 0:
-                    score = score_func('-', b)
+                    score = -4
                 else:
-                    score = 0
+                    score = -1 
+                    gapH[row, col] = gapH[row - 1, col]
                 delete_indel = H[row - 1, col] + score
 
                 if gapH[row, col - 1] == 0:
-                    score = score_func(a, '-')
+                    score = -4
                 else:
-                    score = 0
+                    score = -1
+                    gapH[row, col] = gapH[row, col - 1]
                 insert_indel = H[row, col - 1] + score
 
                 scores = [leave_or_replace_letter, delete_indel, insert_indel]
@@ -163,7 +169,9 @@ class SequencesAnalyzer:
                 else:
                     best_action = np.argmax(scores)
                     if best_action in [1, 2]:
-                        gapH[row, col] = True
+                        gapH[row, col] += 1
+                    else:
+                        gapH[row, col] = 0
 
                 H[row, col] = scores[best_action]
                 traceback[row, col] = self.traceback_symbols[best_action]
@@ -327,3 +335,4 @@ class SequencesAnalyzer:
     #     elif symbol == '←':
     #         col -= 1
     #         return '-', self.seq_b[col]
+
