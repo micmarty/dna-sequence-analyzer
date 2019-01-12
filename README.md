@@ -9,7 +9,7 @@ This is a set of simple command-line python scripts with [101](https://dictionar
 
 ## Features
 - Pariwise local alignment (Smith-Waterman algorithm)
-- Pairwise global alignment (Needleman-Wunsch algorithm)
+- Pairwise global alignment (Needleman-Wunsch (with or without start gap penalty) and Hirschberg's algorithm)
 - Edit distance and similarity (Needleman-Wunsch algorithm)
 - RNA to amino acids translation
 
@@ -17,12 +17,20 @@ This is a set of simple command-line python scripts with [101](https://dictionar
 ```
 Usage: analyze.py [OPTIONS] SEQUENCE_A SEQUENCE_B
 
-Options:
+Options
   -S, --summary
   -s, --similarity
   -e, --edit-distance
   -a, --alignment [global|local]
+  --gap-start INTEGER             When gap starts, that score will be applied
+                                  (besides `gap` penalty).
+  --gap INTEGER                   Penalty for a single gap.
+  --match INTEGER                 Score for identical letters in both
+                                  seqences.
+  --mismatch INTEGER              Score for mismatched letters in both
+                                  seqences.
   --load-csv                      Load scores.csv and edit_cost.csv
+  --verbose                       Verbose mode.
   --help                          Show this message and exit.
 ```
 ```
@@ -40,7 +48,12 @@ python analyze.py AGCT AGGT --similarity
 python analyze.py AGCT AGGT --edit-distance
 python analyze.py AGCT AGGT --edit-distance --load-csv
 python analyze.py AGCT AGGT --alignment local
-python analyze.py AGCT AGGT --alignment global
+python analyze.py AGCT AGGT --alignment global 
+
+# TODO Test these in different configuration
+python analyze.py AGCT AGGT --alignment global --gap-start -10 --gap -1
+python analyze.py AGCT AGGT --alignment global --match 10 --mismatch -10
+python analyze.py AGCT AGGT --alignment global --load_csv --gap-start -3
 
 python translate.py AUGACGGAGCUUCGGAGCUAG
 python translate.py --input-file rna.txt
