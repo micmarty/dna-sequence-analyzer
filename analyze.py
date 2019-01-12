@@ -1,5 +1,7 @@
 import click
 from SequenceAnalyzer import SequencesAnalyzer
+from HirschbergAlgorithm import HirschbergAlgorithm
+from ScoringSystem import ScoringSystem
 
 @click.command()
 @click.argument('sequence_a')
@@ -28,7 +30,9 @@ def main(load_csv, summary, similarity, edit_distance, sequence_a, sequence_b, a
     elif alignment == 'global':
         analyzer.global_alignment()
         print('--------------------------')
-        analyzer.hirschberg_algorithm(X=analyzer.seq_a, Y=analyzer.seq_b)
+        #analyzer.hirschberg_algorithm(X=analyzer.seq_a, Y=analyzer.seq_b)
+        scoring_sys = ScoringSystem(match=2, mismatch=-1, gap=-2)
+        HirschbergAlgorithm(scoring_sys).align(sequence_a, sequence_b)
 
 
 if __name__ == '__main__':
