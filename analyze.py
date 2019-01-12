@@ -10,9 +10,21 @@ from ScoringSystem import ScoringSystem
 @click.option('-s', '--similarity', is_flag=True)
 @click.option('-e', '--edit-distance', is_flag=True)
 @click.option('-a', '--alignment', type=click.Choice(['global', 'local']))
-#@click.option('--load', type=click.Path(exists=True), help='Text file containing 5x5 matrix of integers separated by spaces and new line')
+
+@click.option('--gap-start', default=-1, help='When gap starts, that score will be applied (besides `gap` penalty).')
+@click.option('--gap', default=-1, help='Penalty for a single gap.')
+@click.option('--match', default=1, help='Score for identical letters in both seqences.')
+@click.option('--mismatch', default=-1, help='Score for mismatched letters in both seqences.')
 @click.option('--load-csv', is_flag=True, help='Load scores.csv and edit_cost.csv')
-def main(load_csv, summary, similarity, edit_distance, sequence_a, sequence_b, alignment):
+@click.option('--verbose', is_flag=True, help='Verbose mode.')
+def main(load_csv, summary, similarity, edit_distance, sequence_a, sequence_b, alignment, gap_start, gap, match, mismatch, verbose):
+    if verbose:
+        print(
+            f'Gap start penalty: {gap_start}\n'
+            f'Gap penalty: {gap}\n'
+            f'Match: {match}\n'
+            f'Mismatch: {mismatch}\n'
+        )
     analyzer = SequencesAnalyzer(sequence_a, sequence_b, load_csv=load_csv)
 
     if summary:
