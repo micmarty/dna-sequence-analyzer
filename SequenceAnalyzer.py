@@ -32,7 +32,7 @@ class SequencesAnalyzer:
         self.seq_a = seq_a
         self.seq_b = seq_b
 
-        self.scoring_sys = ScoringSystem(match=1, mismatch=-1, gap=-2)
+        self.scoring_sys = ScoringSystem(match=1, mismatch=-1, gap=-1)
         self.edit_cost_sys = ScoringSystem(match=0, mismatch=1, gap=1)
 
         if load_csv:
@@ -110,6 +110,9 @@ class SequencesAnalyzer:
         H = np.zeros(shape=(rows, cols), dtype=int)
         traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
 
+        # 3. msadkjnsadkjn;sdf
+        gapH = np.zeros(shape=(rows, cols), dtype=int)
+
         if minimize:
             # Edit cost calculation
             score_func = self.edit_cost_sys.score
@@ -140,8 +143,18 @@ class SequencesAnalyzer:
 
                 leave_or_replace_letter = H[row -
                     1, col - 1] + score_func(a, b)
-                delete_indel = H[row - 1, col] + score_func('-', b)
-                insert_indel = H[row, col - 1] + score_func(a, '-')
+
+                if gapH[row - 1, col] == 0:
+                    score = score_func('-', b)
+                else:
+                    score = 0
+                delete_indel = H[row - 1, col] + score
+
+                if gapH[row, col - 1] == 0:
+                    score = score_func(a, '-')
+                else:
+                    score = 0
+                insert_indel = H[row, col - 1] + score
 
                 scores = [leave_or_replace_letter, delete_indel, insert_indel]
 
@@ -149,10 +162,13 @@ class SequencesAnalyzer:
                     best_action = np.argmin(scores)
                 else:
                     best_action = np.argmax(scores)
+                    if best_action in [1, 2]:
+                        gapH[row, col] = True
 
                 H[row, col] = scores[best_action]
                 traceback[row, col] = self.traceback_symbols[best_action]
 
+        print(gapH)
         return {
             'result_matrix': H,
             'traceback_matrix': traceback,
