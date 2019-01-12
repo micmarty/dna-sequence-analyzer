@@ -127,7 +127,9 @@ class SequencesAnalyzer:
         # Put sequences' letters into 1st row and 1st column (for better visualization)
         traceback[0, 1:] = np.array(list(self.seq_b), dtype=str)
         traceback[1:, 0] = np.array(list(self.seq_a), dtype=str)
-
+        traceback[1:, 0] = '↑'
+        traceback[0, 1:] = '←'
+        
         # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
         H[0, :] = np.arange(start=0, stop=sign*cols, step=sign)
         H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign)
