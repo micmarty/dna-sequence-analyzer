@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple, Dict, Any
 from ScoringSystem import ScoringSystem
-
+from copy import copy
 '''
 Authors:
 - Michal Martyniak (github: @micmarty)
@@ -32,7 +32,7 @@ class SequencesAnalyzer:
         self.seq_a = seq_a
         self.seq_b = seq_b
 
-        self.scoring_sys = ScoringSystem(match=1, mismatch=-1, gap=-1)
+        self.scoring_sys = ScoringSystem(match=2, mismatch=-1, gap=-2)
         self.edit_cost_sys = ScoringSystem(match=0, mismatch=1, gap=1)
 
         if load_csv:
@@ -46,6 +46,7 @@ class SequencesAnalyzer:
     def global_alignment(self) -> Tuple[str, str]:
         result: Dict[str, Any] = self.needleman_wunsch_algorithm(
             minimize=False, alignment_cal=True)
+        # result: Dict[str, Any] = self.NWScore(seq_a=self.seq_a, seq_b=self.seq_b)
         alignment_a, alignment_b = self._traceback(
             result_matrix=result['result_matrix'],
             traceback_matrix=result['traceback_matrix'],
@@ -176,6 +177,55 @@ class SequencesAnalyzer:
             'score_pos': (rows - 1, cols - 1)   # as above...
         }
 
+    def NWScore(self, seq_a, seq_b):
+        # 1. Prepare dimensions (required additional 1 column and 1 row)
+        rows, cols = len(seq_a) + 1, len(seq_b) + 1
+
+        # 2. Initialize matrices
+        # Use grid/matrix as graph-like acyclic digraph (array cells are vertices)
+        H = np.zeros(shape=(rows, cols), dtype=int)
+        traceback = np.zeros(shape=(rows, cols), dtype=np.dtype('U5'))
+
+        # Similarity calculation
+        score_func = self.scoring_sys.score
+
+        # Global alignment calculation -> 1st row and column need to have negative values
+        sign = self.scoring_sys.gap
+
+        # Put sequences' letters into 1st row and 1st column (for better visualization)
+        traceback[0, 1:] = np.array(list(seq_b), dtype=str)
+        traceback[1:, 0] = np.array(list(seq_a), dtype=str)
+    
+        # 3. Top row and leftmost column, like: 0, 1, 2, 3, etc.
+        H[0, :] = np.arange(start=0, stop=sign*cols, step=sign)
+        H[:, 0] = np.arange(start=0, stop=sign*rows, step=sign)
+
+        for row in range(1, rows):
+            for col in range(1, cols):
+                # Current pair of letters from sequence A and B
+                a = seq_a[row - 1]
+                b = seq_b[col - 1]
+
+                leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
+                delete_indel = H[row - 1, col] +  score_func('-', b)
+                insert_indel = H[row, col - 1] + score_func(a, '-')
+
+                scores = [leave_or_replace_letter, delete_indel, insert_indel]
+                best_action = np.argmax(scores)
+
+                H[row, col] = scores[best_action]
+                traceback[row, col] = self.traceback_symbols[best_action]
+        return H[-1, :]
+        # return {
+        #     'result_matrix': H,
+        #     'traceback_matrix': traceback,
+        #     'score': H[-1, -1],                 # Always right-bottom corner
+        #     'score_pos': (rows - 1, cols - 1)   # as above...
+        # }
+
+    def hirschberg_global_alignment(self):
+        pass
+
     def smith_waterman_algorithm(self) -> Dict[str, Any]:
         '''
         Note: Smith-Waterman and Needleman-Wunsch algorithms
@@ -226,7 +276,7 @@ class SequencesAnalyzer:
             'score_pos': np.unravel_index(np.argmax(H, axis=None), H.shape)
         }
 
-    def hirschberg_algorithm(self) -> Dict[str, Any]:
+    def hirschberg_algorithm(self, X, Y):
         '''
         Hirschberg’s algorithm uses Θ(m +n) space.
 
@@ -234,7 +284,38 @@ class SequencesAnalyzer:
         - Only Θ(1) space needs to be maintained per recursive call.
         - Number of recursive calls ≤ n. ▪
         '''
-        pass
+        Z = ''
+        W = ''
+        Q = ''
+        E = ''
+        aligned_X = ''
+        aligned_Y = ''
+
+        if len(X) == 0:
+            for i in range(0, len(Y)):
+                Z += '-'
+                W += Y[i]
+            print(f'{Z}->{W}')
+        elif len(Y) == 0:
+            for i in range(0, len(X)):
+                Z += X[i] 
+                W += '-'
+            print(f'{Z}->{W}')
+        elif len(X) == 1 or len(Y) == 1:
+            # Z, W = self.NWScore(seq_a=self.seq_a.copy(), seq_b=self.seq_b.copy())
+            print(f'{X}->{Y}')
+        else:
+            x_len = len(X)
+            x_mid = int(len(X) // 2)
+            y_len = len(Y)
+
+            score_left = self.NWScore(seq_a=X[0:x_mid], seq_b=Y)
+            rev_a = X[x_mid:x_len]
+            score_right = self.NWScore(seq_a=rev_a[::-1], seq_b=Y[::-1])
+            y_mid = np.argmax(score_left + np.flip(score_right))
+            Z, W = self.hirschberg_algorithm(X=X[0:x_mid], Y=Y[0:y_mid])
+            Q, E = self.hirschberg_algorithm(X=X[x_mid:x_len], Y=Y[y_mid:y_len])
+        return Z+Q, W+E
 
     def _traceback(self, result_matrix, traceback_matrix, start_pos: Tuple[int, int], global_alignment: bool) -> Tuple[str, str]:
         seq_a_aligned = ''
@@ -327,3 +408,5 @@ class SequencesAnalyzer:
     #     elif symbol == '←':
     #         col -= 1
     #         return '-', self.seq_b[col]
+
+

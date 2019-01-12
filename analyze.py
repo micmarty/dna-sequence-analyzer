@@ -27,6 +27,8 @@ def main(load_csv, summary, similarity, edit_distance, sequence_a, sequence_b, a
         analyzer.local_alignment()
     elif alignment == 'global':
         analyzer.global_alignment()
+        print('--------------------------')
+        analyzer.hirschberg_algorithm(X=analyzer.seq_a, Y=analyzer.seq_b)
 
 
 if __name__ == '__main__':
