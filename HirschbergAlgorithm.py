@@ -22,21 +22,22 @@ class HirschbergAlgorithm:
         print(self.aligned_seq_a)
         print(self.aligned_seq_b)
         
+    def append_alignment(self, Z: str, W: str):
+        print(f'{Z} -> {W}')
+        self.aligned_seq_a += Z
+        self.aligned_seq_b += W
+
     def excute(self, seq_a: str, seq_b: str) -> Tuple[str, str]:
         Z, W = '', ''
 
         if len(seq_a) == 0:
             for b in seq_b:
                 Z, W = Z + '-', W + b
-            print(f'{Z} -> {W}')
-            self.aligned_seq_a += Z
-            self.aligned_seq_b += W
+            self.append_alignment(Z, W)
         elif len(seq_b) == 0:
             for a in seq_a:
                 Z, W = Z + a, W + '-'
-            print(f'{Z} -> {W}')
-            self.aligned_seq_a += Z
-            self.aligned_seq_b += W
+            self.append_alignment(Z, W)
         elif len(seq_a) == 1 or len(seq_b) == 1:
             # Z, W = self.NWScore(seq_a=self.seq_a.copy(), seq_b=self.seq_b.copy())
 
@@ -45,10 +46,7 @@ class HirschbergAlgorithm:
                 seq_b = seq_b.ljust(len(seq_a), '-')
             elif len(seq_b) > 1:
                 seq_a = seq_a.ljust(len(seq_b), '-')
-            print(f'{seq_a} -> {seq_b}')
-
-            self.aligned_seq_a += seq_a
-            self.aligned_seq_b += seq_b
+            self.append_alignment(seq_a, seq_b)
         else:
             # Calculate left score
             a_mid: int = int(len(seq_a) // 2)
