@@ -10,10 +10,11 @@ print(ScoringSystem(match=10, gap=-5))
 class ScoringSystem:
     '''Responsible for returning proper scoring/edit cost values for any letter combination'''
 
-    def __init__(self, match: int=1, mismatch: int=-1, gap: int=-1) -> None:
+    def __init__(self, match: int=1, mismatch: int=-1, gap: int=-1, gap_start: int=0) -> None:
         self.match = match
         self.mismatch = mismatch
         self.gap = gap
+        self.gap_start = gap_start
         self.custom_scoring = None
 
     def load_csv(self, filename: str) -> None:
