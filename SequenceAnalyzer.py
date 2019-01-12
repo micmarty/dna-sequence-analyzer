@@ -237,9 +237,9 @@ class SequencesAnalyzer:
         while not end_condition_reached(row, col):
             symbol = traceback_matrix[row, col]
             if row == 0:
-                symbol = '↑'
-            if col == 0:
                 symbol = '←'
+            if col == 0:
+                symbol = '↑'
             # Use arrows to navigate and collect letters (in reversed order)
             # Shift/reverse indexes by one beforehand (we want to get the letter that arrow points to)
             if symbol == '↖':
