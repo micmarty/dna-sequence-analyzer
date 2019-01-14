@@ -31,6 +31,7 @@ class NeedlemanWunschAlgorithm:
             print(self.aligned_seq_b)
 
     def execute(self, seq_a: str, seq_b: str):
+        '''Simplified version for Hirschberg algorithm'''
         # 1. Prepare dimensions (required additional 1 column and 1 row)
         rows, cols = len(seq_a) + 1, len(seq_b) + 1
 
@@ -61,7 +62,7 @@ class NeedlemanWunschAlgorithm:
 
                 H[row, col] = scores[best_action]
         return H
-    
+
     def execute_with_start_gap_penalty(self, seq_a, seq_b):
         '''It's huge mess...'''
         rows, cols = len(seq_a) + 1, len(seq_b) + 1
@@ -73,9 +74,17 @@ class NeedlemanWunschAlgorithm:
         T[0, 1:] = np.array(list(seq_b), dtype=str)
         T[1:, 0] = np.array(list(seq_a), dtype=str)
     
-        d = self.scoring_sys.gap # d is gap penalty
-        H[0, :] = np.arange(start=0, stop=d * cols, step=d)
-        H[:, 0] = np.arange(start=0, stop=d * rows, step=d)
+        # d = self.scoring_sys.gap # d is gap penalty
+        # H[0, :] = np.arange(start=0, stop=d * cols, step=d)
+        # H[:, 0] = np.arange(start=0, stop=d * rows, step=d)
+
+        # Like -4, -5, -6 -7 when gap_start=-3 and gap=-1
+        H[1, 0] = self.scoring_sys.gap_start + self.scoring_sys.gap
+        H[0, 1] = self.scoring_sys.gap_start + self.scoring_sys.gap
+        for row in range(2, rows):
+            H[row, 0] = H[row -1 , 0] + self.scoring_sys.gap
+        for col in range(2, cols):
+            H[0, col] = H[0, col - 1] + self.scoring_sys.gap
 
         for row in range(1, rows):
             for col in range(1, cols):
@@ -86,15 +95,15 @@ class NeedlemanWunschAlgorithm:
                 leave_or_replace_letter = H[row - 1, col - 1] + score_func(a, b)
 
                 if G[row - 1, col] == 0:
-                    score = score_func('-', b)
+                    score = self.scoring_sys.gap_start + score_func('-', b)
                 else:
-                    score = 0
+                    score = score_func('-', b)
                 delete_indel = H[row - 1, col] + score
 
                 if G[row, col - 1] == 0:
-                    score = score_func(a, '-')
+                    score = self.scoring_sys.gap_start + score_func(a, '-')
                 else:
-                    score = 0
+                    score = score_func('-', b)
                 insert_indel = H[row, col - 1] + score
 
                 scores = [leave_or_replace_letter, delete_indel, insert_indel]
